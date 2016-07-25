@@ -1,14 +1,13 @@
-import unittest
 import timeit
-
-from nose.tools import assert_true
-import numpy as np
-from numpy.testing import assert_almost_equal
-from numpy.testing.decorators import skipif
+import unittest
 
 import arch.univariate.recursions as rec
 import arch.univariate.recursions_python as recpy
+import numpy as np
 from arch.compat.python import range
+from nose.tools import assert_true
+from numpy.testing import assert_almost_equal
+from numpy.testing.decorators import skipif
 
 try:
     import numba

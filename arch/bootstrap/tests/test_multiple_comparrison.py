@@ -5,14 +5,13 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from arch.bootstrap import (StationaryBootstrap, CircularBlockBootstrap,
+                            MovingBlockBootstrap)
+from arch.bootstrap.multiple_comparrison import SPA, StepM, MCS
 from nose.tools import assert_true
 from numpy import random, linspace
 from numpy.testing import assert_equal, assert_raises, assert_allclose
 from pandas.util.testing import assert_series_equal, assert_frame_equal
-
-from arch.bootstrap import (StationaryBootstrap, CircularBlockBootstrap,
-                            MovingBlockBootstrap)
-from arch.bootstrap.multiple_comparrison import SPA, StepM, MCS
 
 
 class TestSPA(TestCase):
@@ -149,12 +148,11 @@ class TestSPA(TestCase):
         assert_true(isinstance(spa.bootstrap, MovingBlockBootstrap))
 
     def test_single_model(self):
-        spa = SPA(self.benchmark, self.models[:,0])
+        spa = SPA(self.benchmark, self.models[:, 0])
         spa.compute()
 
-        spa = SPA(self.benchmark_series, self.models_df.iloc[:,0])
+        spa = SPA(self.benchmark_series, self.models_df.iloc[:, 0])
         spa.compute()
-
 
 
 class TestStepM(TestCase):
@@ -223,10 +221,10 @@ class TestStepM(TestCase):
         assert_equal(expected, str(stepm))
 
     def test_single_model(self):
-        stepm = StepM(self.benchmark, self.models[:,0], size=0.10)
+        stepm = StepM(self.benchmark, self.models[:, 0], size=0.10)
         stepm.compute()
 
-        stepm = StepM(self.benchmark_series, self.models_df.iloc[:,0])
+        stepm = StepM(self.benchmark_series, self.models_df.iloc[:, 0])
         stepm.compute()
 
     def test_all_superior(self):
@@ -242,7 +240,7 @@ class TestStepM(TestCase):
 
     def test_exact_ties(self):
         adj_models = self.models_df - 100.0
-        adj_models.iloc[:, :2] -= adj_models.iloc[:,:2].mean()
+        adj_models.iloc[:, :2] -= adj_models.iloc[:, :2].mean()
         adj_models.iloc[:, :2] += self.benchmark_df.mean().iloc[0]
         stepm = StepM(self.benchmark_df, adj_models, size=0.10)
         stepm.compute()
@@ -309,7 +307,7 @@ class TestMCS(TestCase):
             pvals[i] = pval if i == 0 else np.max([pvals[i - 1], pval])
             indices[i] = include[drop_index]
         direct = pd.DataFrame(pvals,
-                              index=np.array(indices,dtype=np.int64),
+                              index=np.array(indices, dtype=np.int64),
                               columns=['Pvalue'])
         direct.index.name = 'Model index'
         assert_frame_equal(mcs.pvalues.iloc[:m], direct)
@@ -351,11 +349,10 @@ class TestMCS(TestCase):
             pvals[i] = pval if i == 0 else np.max([pvals[i - 1], pval])
             indices[i] = include[drop_index]
         direct = pd.DataFrame(pvals,
-                              index=np.array(indices,dtype=np.int64),
+                              index=np.array(indices, dtype=np.int64),
                               columns=['Pvalue'])
         direct.index.name = 'Model index'
         assert_frame_equal(mcs.pvalues.iloc[:m], direct)
-
 
     def test_smoke(self):
         mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max')
@@ -367,13 +364,12 @@ class TestMCS(TestCase):
         assert_true(isinstance(mcs.pvalues, pd.DataFrame))
 
     def test_errors(self):
-        assert_raises(ValueError, MCS, self.losses[:,1], 0.05)
+        assert_raises(ValueError, MCS, self.losses[:, 1], 0.05)
         mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max', bootstrap='circular')
         mcs.compute()
         mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max', bootstrap='moving block')
         mcs.compute()
         assert_raises(ValueError, MCS, self.losses, 0.05, bootstrap='unknown')
-
 
     def test_str_repr(self):
         mcs = MCS(self.losses, 0.05)
@@ -392,7 +388,7 @@ class TestMCS(TestCase):
         mcs = MCS(losses, 0.05, reps=200)
         mcs.seed(23456)
         mcs.compute()
-        nan_locs = np.isnan(mcs.pvalues.iloc[:,0])
+        nan_locs = np.isnan(mcs.pvalues.iloc[:, 0])
         assert_true(not nan_locs.any())
 
     def test_exact_ties(self):

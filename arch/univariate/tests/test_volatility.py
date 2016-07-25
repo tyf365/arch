@@ -807,6 +807,5 @@ class TestVolatiltyProcesses(unittest.TestCase):
         assert_raises(ValueError, EGARCH, p=1, o=1, q=-1)
 
 
-
 if __name__ == '__main__':
     unittest.main()

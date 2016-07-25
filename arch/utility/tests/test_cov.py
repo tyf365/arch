@@ -3,15 +3,13 @@ from __future__ import division
 from unittest import TestCase
 
 import numpy as np
+from arch.utility import cov_nw
+from nose.tools import assert_raises
 from numpy import log, diff
 from numpy.testing import assert_almost_equal
-from nose.tools import assert_raises
-
-from arch.utility import cov_nw
 
 
 class TestVarNW(TestCase):
-
     @classmethod
     def setUpClass(cls):
         from statsmodels.datasets.macrodata import load

@@ -2,28 +2,31 @@
 Core classes for ARCH models
 """
 from __future__ import division, absolute_import
-from copy import deepcopy
-from functools import partial
+
 import datetime as dt
 import warnings
+from copy import deepcopy
+from functools import partial
 
 import numpy as np
-from numpy.linalg import matrix_rank
-from numpy import ones, zeros, sqrt, diag, empty, ceil
-from scipy.optimize import fmin_slsqp
-import scipy.stats as stats
 import pandas as pd
-from statsmodels.tools.decorators import cache_readonly, resettable_cache
+import scipy.stats as stats
+from numpy import ones, zeros, sqrt, diag, empty, ceil
+from numpy.linalg import matrix_rank
+from scipy.optimize import fmin_slsqp
 from statsmodels.iolib.summary import Summary, fmt_2cols, fmt_params
 from statsmodels.iolib.table import SimpleTable
+from statsmodels.tools.decorators import cache_readonly, resettable_cache
 from statsmodels.tools.numdiff import approx_fprime, approx_hess
 
 from .distribution import Distribution, Normal
 from .volatility import VolatilityProcess, ConstantVariance
-from ..utility.array import ensure1d, DocStringInheritor, date_to_index
+from ..common.model import ARCHModel
 from ..compat.python import add_metaclass, range
+from ..utility.array import ensure1d, DocStringInheritor
 
-__all__ = ['implicit_constant', 'ARCHModelResult', 'ARCHModel']
+__all__ = ['implicit_constant', 'UnivariateARCHModelResult',
+           'UnivariateARCHModel']
 
 # Callback variables
 _callback_iter, _callback_llf = 0, 0.0,
@@ -32,6 +35,7 @@ _callback_func_count, _callback_iter_display = 0, 1
 
 class ConvergenceWarning(Warning):
     pass
+
 
 convergence_warning = """
 The optimizer returned code {code}. The message is:
@@ -42,6 +46,7 @@ See scipy.optimize.fmin_slsqp for code meaning.
 
 class StartingValueWarning(Warning):
     pass
+
 
 starting_value_warning = """
 Starting values do not satisfy the parameter constraints in the model.  The
@@ -143,7 +148,7 @@ def implicit_constant(x):
 
 
 @add_metaclass(DocStringInheritor)
-class ARCHModel(object):
+class UnivariateARCHModel(ARCHModel):
     """
     Abstract base class for mean models in ARCH processes.  Specifies the
     conditional mean process.
@@ -156,51 +161,18 @@ class ARCHModel(object):
     def __init__(self, y=None, volatility=None, distribution=None,
                  hold_back=None,
                  last_obs=None):
-        self._is_pandas = isinstance(y, (pd.DataFrame, pd.Series))
+
         if y is not None:
-            self._y_series = ensure1d(y, 'y', series=True)
+            y = ensure1d(y, 'y')
         else:
-            self._y_series = ensure1d(empty((0,)), 'y', series=True)
+            y = ensure1d(empty((0,)), 'y')
 
-        self._y = np.asarray(self._y_series)
-        self._y_original = y
+        super(UnivariateARCHModel, self).__init__(y, volatility, distribution,
+                                                  hold_back, last_obs)
 
-        self.hold_back = hold_back
-        if isinstance(hold_back, (str, dt.datetime, np.datetime64)):
-            date_index = self._y_series.index
-            _first_obs_index = date_to_index(hold_back, date_index)
-            self.first_obs = date_index[_first_obs_index]
-        elif hold_back is None:
-            self.first_obs = _first_obs_index = 0
-        else:
-            _first_obs_index = hold_back
-            self.first_obs = self._y_series.index[_first_obs_index]
-
-        self.last_obs = _last_obs_index = last_obs
-        if isinstance(last_obs, (str, dt.datetime, np.datetime64)):
-            date_index = self._y_series.index
-            _last_obs_index = date_to_index(last_obs, date_index)
-            self.last_obs = date_index[_last_obs_index]
-        elif last_obs is None:
-            self.last_obs = _last_obs_index = self._y.shape[0]
-        else:
-            self.last_obs = self._y_series.index[last_obs]
-
-        self.nobs = _last_obs_index - _first_obs_index
-        self._indices = (_first_obs_index, _last_obs_index)
-
-        self._volatility = None
-        self._distribution = None
-        self._backcast = None
-
-        if volatility is not None:
-            self.volatility = volatility
-        else:
+        if volatility is None:
             self.volatility = ConstantVariance()
-
-        if distribution is not None:
-            self.distribution = distribution
-        else:
+        if distribution is None:
             self.distribution = Normal()
 
     def constraints(self):
@@ -379,7 +351,7 @@ class ARCHModel(object):
         vol_final[first_obs:last_obs] = vol
 
         model_copy = deepcopy(self)
-        return ARCHModelFixedResult(params, resids, vol, self._y_series, names,
+        return ARCHModelFixedResult(params, resids, vol, self._y_pd, names,
                                     loglikelihood, self._is_pandas, model_copy)
 
     def fit(self, update_freq=1, disp='final', starting_values=None,
@@ -406,7 +378,7 @@ class ARCHModel(object):
 
         Returns
         -------
-        results : ARCHModelResult
+        results : UnivariateARCHModelResult
             Object containing model results
 
         Notes
@@ -537,9 +509,10 @@ class ARCHModel(object):
         vol_final[first_obs:last_obs] = vol
 
         model_copy = deepcopy(self)
-        return ARCHModelResult(params, None, r2, resids_final, vol_final,
-                               cov_type, self._y_series, names, loglikelihood,
-                               self._is_pandas, xopt, model_copy)
+        return UnivariateARCHModelResult(params, None, r2, resids_final,
+                                         vol_final, cov_type, self._y_pd,
+                                         names, loglikelihood,
+                                         self._is_pandas, xopt, model_copy)
 
     def parameter_names(self):
         """List of parameters names
@@ -1069,7 +1042,7 @@ class ARCHModelFixedResult(object):
         return fig
 
 
-class ARCHModelResult(ARCHModelFixedResult):
+class UnivariateARCHModelResult(ARCHModelFixedResult):
     """
     Results from estimation of an ARCHModel model
 
@@ -1152,9 +1125,10 @@ class ARCHModelResult(ARCHModelFixedResult):
     def __init__(self, params, param_cov, r2, resid, volatility, cov_type,
                  dep_var, names, loglikelihood, is_pandas, optim_output,
                  model):
-        super(ARCHModelResult, self).__init__(params, resid, volatility,
-                                              dep_var, names, loglikelihood,
-                                              is_pandas, model)
+        super(UnivariateARCHModelResult, self).__init__(params, resid,
+                                                        volatility, dep_var,
+                                                        names, loglikelihood,
+                                                        is_pandas, model)
 
         self._param_cov = param_cov
         self._r2 = r2

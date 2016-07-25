@@ -1,14 +1,13 @@
 from unittest import TestCase
 
-from nose.tools import assert_true
-from numpy.testing import assert_equal, assert_raises
 import numpy as np
-from pandas import Series, DataFrame, date_range
-
+from arch.compat.python import add_metaclass
+from arch.univariate.base import implicit_constant
 from arch.utility.array import ensure1d, parse_dataframe, DocStringInheritor, \
     date_to_index, find_index
-from arch.univariate.base import implicit_constant
-from arch.compat.python import add_metaclass
+from nose.tools import assert_true
+from numpy.testing import assert_equal, assert_raises
+from pandas import Series, DataFrame, date_range
 
 
 class TestUtils(TestCase):
@@ -24,22 +23,22 @@ class TestUtils(TestCase):
 
         y = Series(np.arange(5.0))
         ys = ensure1d(y, 'y')
-        assert_true(isinstance(ys, np.ndarray))
+        assert_true(isinstance(ys, Series))
         ys = ensure1d(y, 'y', True)
         assert_true(isinstance(ys, Series))
         y = DataFrame(y)
         ys = ensure1d(y, 'y')
-        assert_true(isinstance(ys, np.ndarray))
+        assert_true(isinstance(ys, Series))
         ys = ensure1d(y, 'y', True)
         assert_true(isinstance(ys, Series))
         y = Series(np.arange(5.0), name='series')
         ys = ensure1d(y, 'y')
-        assert_true(isinstance(ys, np.ndarray))
+        assert_true(isinstance(ys, Series))
         ys = ensure1d(y, 'y', True)
         assert_true(isinstance(ys, Series))
         y = DataFrame(y)
         ys = ensure1d(y, 'y')
-        assert_true(isinstance(ys, np.ndarray))
+        assert_true(isinstance(ys, Series))
         ys = ensure1d(y, 'y', True)
         assert_true(isinstance(ys, Series))
         y = DataFrame(np.reshape(np.arange(10), (5, 2)))
@@ -121,18 +120,18 @@ class TestUtils(TestCase):
         assert_equal(find_index(series, series.index[0]), 0)
         assert_equal(find_index(series, series.index[3000]), 3000)
         assert_equal(find_index(series, series.index[3000].to_datetime()), 3000)
-        found_loc =find_index(series,
-                              np.datetime64(series.index[3000].to_datetime()))
+        found_loc = find_index(series,
+                               np.datetime64(series.index[3000].to_datetime()))
         assert_equal(found_loc, 3000)
         assert_raises(ValueError, find_index, series, 'bad-date')
         assert_raises(ValueError, find_index, series, '1900-01-01')
-        
+
         assert_equal(find_index(df, '2000-01-01'), 0)
         assert_equal(find_index(df, df.index[0]), 0)
         assert_equal(find_index(df, df.index[3000]), 3000)
         assert_equal(find_index(df, df.index[3000].to_datetime()), 3000)
-        found_loc =find_index(df,
-                              np.datetime64(df.index[3000].to_datetime()))
+        found_loc = find_index(df,
+                               np.datetime64(df.index[3000].to_datetime()))
         assert_equal(found_loc, 3000)
         assert_raises(ValueError, find_index, df, 'bad-date')
         assert_raises(ValueError, find_index, df, '1900-01-01')

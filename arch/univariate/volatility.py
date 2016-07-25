@@ -4,15 +4,16 @@ inherit from :class:`VolatilityProcess` and provide the same methods with the
 same inputs.
 """
 from __future__ import division, absolute_import
+
 import itertools
 
 import numpy as np
 from numpy import sqrt, ones, zeros, isscalar, sign, ones_like, arange, \
     empty, abs, array, finfo, float64, log, exp, floor
 
-from ..utility.array import ensure1d, DocStringInheritor
 from .distribution import Normal
 from ..compat.python import add_metaclass, range
+from ..utility.array import ensure1d, DocStringInheritor
 
 try:
     from .recursions import garch_recursion, harch_recursion, egarch_recursion
@@ -515,7 +516,7 @@ class GARCH(VolatilityProcess):
                 loc += 1
             for j in range(o):
                 fsigma[t] += parameters[loc] * \
-                    fdata[t - 1 - j] * (data[t - 1 - j] < 0)
+                             fdata[t - 1 - j] * (data[t - 1 - j] < 0)
                 loc += 1
             for j in range(q):
                 fsigma[t] += parameters[loc] * fsigma[t - 1 - j]
@@ -1162,7 +1163,7 @@ class EGARCH(VolatilityProcess):
             loc += 1
             for j in range(p):
                 lnsigma2[t] += parameters[loc] * \
-                    (abserrors[t - 1 - j] - norm_const)
+                               (abserrors[t - 1 - j] - norm_const)
                 loc += 1
             for j in range(o):
                 lnsigma2[t] += parameters[loc] * errors[t - 1 - j]

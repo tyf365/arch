@@ -88,13 +88,15 @@ before_install:
 install:
   - conda create --yes --quiet -n arch-test ${PKGS} ${OPTIONAL} statsmodels nbconvert nbformat nose pip pyyaml setuptools pyqt pyparsing flake8
   - source activate arch-test
-  - if [ ${COVERAGE} = true ]; then pip install coverage coveralls; fi;
+  - if [ ${COVERAGE} = true ]; then pip install coverage coveralls codecov; fi;
   - if [ ${STATSMODELS_MASTER} = true ]; then sh ./ci/statsmodels-master.sh; fi;
   - python setup.py build
   - python setup.py install
 
 script:
   - SRCDIR=$PWD
+  # Check for PEP compatibility
+  - flake8 arch --exclude=*test*
   # Show versions
   - python -c 'import statsmodels.api as sm; sm.show_versions();'
   - mkdir -p "${SRCDIR}/travis-test"; cd "${SRCDIR}/travis-test"
@@ -105,7 +107,7 @@ script:
   - nosetests $COVERAGE_OPTIONS arch
 
 after_success:
+  - cd "${SRCDIR}/travis-test"
   - if [ ${COVERAGE} = true ]; then coveralls --rcfile=${SRCDIR}/.travis_coveragerc; fi
-  - if [ ${COVERAGE} = true ]; then bash <(curl -s https://codecov.io/bash); fi
-  - cd ${SRCDIR}
-  - flake8 arch --exclude=*test*
+  - if [ ${COVERAGE} = true ]; then codecov; fi
+

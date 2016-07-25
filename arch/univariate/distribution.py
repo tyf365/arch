@@ -5,15 +5,14 @@ Distributions to use in ARCH models.  All distributions must inherit from
 """
 from __future__ import division, absolute_import
 
-from numpy.random import standard_normal, standard_t
+import scipy.stats as stats
 from numpy import (empty, array, sqrt, log, exp, sign, pi, sum, asarray,
                    ones_like)
+from numpy.random import standard_normal, standard_t
 from scipy.special import gammaln
-import scipy.stats as stats
 
 from ..compat.python import add_metaclass
 from ..utility.array import DocStringInheritor
-
 
 __all__ = ['Distribution', 'Normal', 'StudentsT', 'SkewStudent']
 
@@ -280,7 +279,7 @@ class StudentsT(Distribution):
         where :math:`\Gamma` is the gamma function.
         """
         nu = parameters[0]
-        lls = gammaln((nu + 1)/2) - gammaln(nu/2) - log(pi * (nu - 2))/2
+        lls = gammaln((nu + 1) / 2) - gammaln(nu / 2) - log(pi * (nu - 2)) / 2
         lls -= 0.5 * (log(sigma2))
         lls -= ((nu + 1) / 2) * \
                (log(1 + (resids ** 2.0) / (sigma2 * (nu - 2))))
@@ -352,7 +351,7 @@ class SkewStudent(Distribution):
 
     def constraints(self):
         return array([[1, 0], [-1, 0], [0, 1], [0, -1]]), \
-            array([2.05, -300.0, -1, -1])
+               array([2.05, -300.0, -1, -1])
 
     def bounds(self, resids):
         return [(2.05, 300.0), (-1, 1)]
@@ -410,10 +409,10 @@ class SkewStudent(Distribution):
         const_a = self.__const_a(parameters)
         const_b = self.__const_b(parameters)
 
-        resids = resids / sigma2**.5
-        lls = log(const_b) + const_c - log(sigma2)/2
+        resids = resids / sigma2 ** .5
+        lls = log(const_b) + const_c - log(sigma2) / 2
         llf_resid = ((const_b * resids + const_a) /
-                     (1 + sign(resids + const_a / const_b) * lam))**2
+                     (1 + sign(resids + const_a / const_b) * lam)) ** 2
         lls -= (eta + 1) / 2 * log(1 + llf_resid / (eta - 2))
 
         if individual:
@@ -474,7 +473,8 @@ class SkewStudent(Distribution):
 
         """
         eta, lam = parameters
-        return 4*lam*exp(self.__const_c(parameters))*(eta-2)/(eta-1)
+        return (4 * lam *
+                exp(self.__const_c(parameters)) * ((eta - 2) / (eta - 1)))
 
     def __const_b(self, parameters):
         """Compute b constant.
@@ -490,7 +490,7 @@ class SkewStudent(Distribution):
 
         """
         eta, lam = parameters
-        return (1 + 3*lam**2 - self.__const_a(parameters)**2)**.5
+        return (1 + 3 * lam ** 2 - self.__const_a(parameters) ** 2) ** .5
 
     def __const_c(self, parameters):
         """Compute c constant.
@@ -506,8 +506,10 @@ class SkewStudent(Distribution):
 
         """
         eta, lam = parameters
-#        return gamma((eta+1)/2) / ((pi*(eta-2))**.5 * gamma(eta/2))
-        return gammaln((eta+1)/2) - gammaln(eta/2) - log(pi*(eta-2))/2
+        #        return gamma((eta+1)/2) / ((pi*(eta-2))**.5 * gamma(eta/2))
+        return (gammaln((eta + 1) / 2) -
+                gammaln(eta / 2) -
+                log(pi * (eta - 2)) / 2)
 
     def ppf(self, arg, parameters):
         """Inverse cumulative density function (ICDF).
@@ -530,13 +532,16 @@ class SkewStudent(Distribution):
         a = self.__const_a(parameters)
         b = self.__const_b(parameters)
 
-        cond = arg < (1-lam)/2
+        cond = arg < (1 - lam) / 2
 
-        icdf1 = stats.t.ppf(arg[cond]/(1-lam), eta)
-        icdf2 = stats.t.ppf(.5+(arg[~cond]-(1-lam)/2)/(1+lam), eta)
-        icdf = -999.99*ones_like(arg)
+        icdf1 = stats.t.ppf(arg[cond] / (1 - lam), eta)
+        icdf2 = stats.t.ppf(.5 + (arg[~cond] - (1 - lam) / 2) / (1 + lam), eta)
+        icdf = -999.99 * ones_like(arg)
         icdf[cond] = icdf1
         icdf[~cond] = icdf2
-        icdf = (icdf * (1+sign(arg-(1-lam)/2)*lam) * (1-2/eta)**.5 - a)/b
+        icdf = (icdf *
+                (1 + sign(arg - (1 - lam) / 2) * lam) * (1 - 2 / eta) ** .5 -
+                a)
+        icdf = icdf / b
 
         return icdf

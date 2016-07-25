@@ -1,17 +1,15 @@
 # TODO: Tests for features that are just called
 # TODO: Test for trend='ctt'
 from __future__ import print_function, division
-from arch.compat.python import iteritems
-
-import numpy as np
-from numpy.testing import (assert_almost_equal, assert_equal, assert_raises)
-from numpy import log, polyval, diff, ceil
-
-from arch.unitroot import ADF, DFGLS, PhillipsPerron, KPSS, VarianceRatio
-from arch.unitroot.critical_values.dickey_fuller import tau_2010
 
 import warnings
-import sys
+
+import numpy as np
+from arch.compat.python import iteritems
+from arch.unitroot import ADF, DFGLS, PhillipsPerron, KPSS, VarianceRatio
+from arch.unitroot.critical_values.dickey_fuller import tau_2010
+from numpy import log, polyval, diff, ceil
+from numpy.testing import (assert_almost_equal, assert_equal, assert_raises)
 
 DECIMAL_5 = 5
 DECIMAL_4 = 4
@@ -241,4 +239,3 @@ if __name__ == "__main__":
     import nose
 
     nose.runmodule(argv=[__file__, '-vvs', '-x'], exit=False)
-

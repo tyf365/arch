@@ -4,10 +4,10 @@ import unittest
 import warnings
 
 import numpy as np
+import pandas as pd
+from nose.tools import assert_true
 from numpy.random import randn
 from numpy.testing import assert_almost_equal, assert_equal, assert_raises
-from nose.tools import assert_true
-import pandas as pd
 
 try:
     import arch.univariate.recursions as rec
