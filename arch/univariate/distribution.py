@@ -166,7 +166,7 @@ class Normal(Distribution):
 
     def loglikelihoood(self, parameters, resids, sigma2, individual=False):
         """Computes the log-likelihood of assuming residuals are normally
-        distribution.rst, conditional on the variance
+        distributed, conditional on the variance
 
         Parameters
         ----------
@@ -212,7 +212,7 @@ class Normal(Distribution):
         Returns
         -------
         sv : empty array
-            THe normal distribution has no shape parameters
+            The normal distribution has no shape parameters
 
         """
         return empty(0)
