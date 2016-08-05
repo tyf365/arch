@@ -214,10 +214,44 @@ class VolatilityProcess(object):
         """
         raise NotImplementedError('Must be overridden')  # pragma: no cover
 
-    def forecast(self, parameters, data, first_obs=None, horizon=1,
+    def forecast(self, parameters, data, first_obs=0, horizon=1,
                  method='analytic', simulations=1000):
         """
-        Construct forecasts
+        Forecast volatility from the model
+
+        Parameters
+        ----------
+        parameters : 1-d array
+            Parameters required to forecast the volatility model
+        resids : 1-d array, float64
+            Residuals to use in the recursion
+        first_obs : int
+            Index of the first observation to use as the starting point for
+            the forecast.  Default is 0.
+        horizon : int
+            Forecast horizon.  Must be 1 or larger.  Forecasts are produced
+            for horizons in [1, horizon].
+        method : {'analytic', 'simulation', 'bootstrap'}
+            Method to use when producing the forecast. The default is analytic.
+        simulations : int
+            Number of simulations to run when computing the forecast using
+            either simulation or bootstrap.
+
+        Returns
+        -------
+        forecasts : VarianceForecast
+            Class containing the variance forecasts, and, if using simulation
+            or bootstrap, the simulated paths.
+
+        Raises
+        ------
+        NotImplementedError
+            * If method is not known or not supported
+
+        Notes
+        -----
+        The analytic ``method`` is not supported for all models.  Attempting
+        to use this method when not available will raise a ValueError.
         """
         raise NotImplementedError('Must be overridden')  # pragma: no cover
 
