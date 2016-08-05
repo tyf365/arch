@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from arch.compat.python import range, iteritems
 
 import unittest
 import warnings
@@ -7,19 +8,18 @@ import numpy as np
 from numpy.random import randn
 from numpy.testing import assert_almost_equal, assert_equal
 import pandas as pd
+from pandas.util.testing import assert_frame_equal, assert_series_equal
 import pytest
 
 try:
     import arch.univariate.recursions as rec
 except ImportError:
-    import arch.univariate.recursions_python as rec
-from arch.univariate.mean import HARX, ConstantMean, ARX, ZeroMean, \
-    arch_model, LS, align_forecast
-from arch.univariate.volatility import ConstantVariance, GARCH, HARCH, ARCH, \
-    RiskMetrics2006, EWMAVariance, EGARCH
+    import arch.univariate.recursions_python as rec  # noqa
+from arch.univariate.base import ARCHModelResult
+from arch.univariate.mean import HARX, ConstantMean, ARX, ZeroMean, arch_model, LS, align_forecast
+from arch.univariate.volatility import ConstantVariance, GARCH, HARCH, ARCH, RiskMetrics2006, \
+    EWMAVariance, EGARCH
 from arch.univariate.distribution import Normal, StudentsT
-from arch.compat.python import range, iteritems
-from pandas.util.testing import assert_frame_equal, assert_series_equal
 
 
 class TestMeanModel(unittest.TestCase):
@@ -251,6 +251,7 @@ class TestMeanModel(unittest.TestCase):
                   constant=False)
         params = np.array([0.4, 0.3, 0.2, 1.0, 1.0])
         data = arx.simulate(params, self.T, x=randn(self.T + 500, 1))
+        assert len(data) == self.T
         bounds = arx.bounds()
         for b in bounds:
             assert_equal(b[0], -np.inf)
@@ -291,6 +292,7 @@ class TestMeanModel(unittest.TestCase):
         ar = ARX(self.y, lags=3)
         params = np.array([1.0, 0.4, 0.3, 0.2, 1.0])
         data = ar.simulate(params, self.T)
+        assert len(data) == self.T
         assert_equal(self.y, ar.y)
 
         bounds = ar.bounds()
@@ -351,6 +353,7 @@ class TestMeanModel(unittest.TestCase):
         assert isinstance(res.conditional_volatility, pd.Series)
         # Smoke tests
         summ = ar.fit().summary()
+        assert 'Constant Variance' in str(summ)
         ar = ARX(self.y, lags=1, volatility=GARCH(), distribution=StudentsT())
         res = ar.fit(update_freq=5, cov_type='mle')
         res.param_cov
@@ -544,6 +547,10 @@ class TestMeanModel(unittest.TestCase):
         am = arch_model(self.y, mean='ar', lags=[1, 3, 5])
         res = am.fit(cov_type='mle', update_freq=0)
         res2 = am.fit(starting_values=res.params, update_freq=0)
+        assert isinstance(res, ARCHModelResult)
+        assert isinstance(res2, ARCHModelResult)
+        assert len(res.params) == 7
+        assert len(res2.params) == 7
 
         am = arch_model(self.y, mean='zero')
         sv = np.array([1.0, 0.3, 0.8])
@@ -724,3 +731,5 @@ class TestMeanModel(unittest.TestCase):
             sys.stdout = orig_stdout
 
         res = am.fit(disp='off')
+        assert isinstance(res, ARCHModelResult)
+        assert len(res.params == 4)

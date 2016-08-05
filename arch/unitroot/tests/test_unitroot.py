@@ -239,3 +239,4 @@ class TestUnitRoot(TestCase):
     def test_variance_ratio_generic(self):
         # TODO: Currently not a test, just makes sure code runs at all
         vr = VarianceRatio(self.inflation, lags=24)
+        assert isinstance(vr, VarianceRatio)

@@ -2,9 +2,9 @@ import unittest
 import warnings
 
 import numpy as np
+import pytest
 from numpy.testing import assert_almost_equal, assert_equal, assert_allclose, \
     assert_array_equal
-import pytest
 
 try:
     from arch.univariate import _recursions as rec
@@ -52,10 +52,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
                             1, 0, 1, self.T, backcast, var_bounds)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = garch.constraints()
-        A_target = np.vstack((np.eye(3), np.array([[0, -1.0, -1.0]])))
+        a, b = garch.constraints()
+        a_target = np.vstack((np.eye(3), np.array([[0, -1.0, -1.0]])))
         b_target = np.array([0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -123,10 +123,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
         cond_var_direct **= 2.0  # Square since recursion does not apply power
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = garch.constraints()
-        A_target = np.vstack((np.eye(3), np.array([[0, -1.0, -1.0]])))
+        a, b = garch.constraints()
+        a_target = np.vstack((np.eye(3), np.array([[0, -1.0, -1.0]])))
         b_target = np.array([0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -172,10 +172,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
                            self.T, backcast, var_bounds)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = arch.constraints()
-        A_target = np.vstack((np.eye(2), np.array([[0, -1.0]])))
+        a, b = arch.constraints()
+        a_target = np.vstack((np.eye(2), np.array([[0, -1.0]])))
         b_target = np.array([0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -223,9 +223,9 @@ class TestVolatiltyProcesses(unittest.TestCase):
                                var_bounds)
         assert_allclose(sigma2_arch, sigma2_harch)
 
-        A, b = arch.constraints()
-        Ah, bh = harch.constraints()
-        assert_equal(A, Ah)
+        a, b = arch.constraints()
+        ah, bh = harch.constraints()
+        assert_equal(a, ah)
         assert_equal(b, bh)
         assert isinstance(arch.__str__(), str)
         repr = arch.__repr__()
@@ -269,17 +269,16 @@ class TestVolatiltyProcesses(unittest.TestCase):
 
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = harch.constraints()
-        A_target = np.vstack((np.eye(4), np.array([[0, -1.0, -1.0, -1.0]])))
+        a, b = harch.constraints()
+        a_target = np.vstack((np.eye(4), np.array([[0, -1.0, -1.0, -1.0]])))
         b_target = np.array([0.0, 0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
         sim_data = harch.simulate(parameters, self.T, rng.simulate([]))
         np.random.set_state(state)
         e = np.random.standard_normal(self.T + 500)
-        initial_value = 1.0
         sigma2 = np.zeros(self.T + 500)
         data = np.zeros(self.T + 500)
         lagged = np.zeros(22)
@@ -311,9 +310,7 @@ class TestVolatiltyProcesses(unittest.TestCase):
                     shock22 += data[t - i - 1] if t - i - 1 >= 0 else backcast
                 shock22 = shock22 / 22.0
 
-            sigma2[t] += parameters[1] * shock1 \
-                         + parameters[2] * shock5 \
-                         + parameters[3] * shock22
+            sigma2[t] += parameters[1] * shock1 + parameters[2] * shock5 + parameters[3] * shock22
 
             data[t] = e[t] * np.sqrt(sigma2[t])
         data = data[500:]
@@ -350,10 +347,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
         assert_allclose(np.ones_like(self.sigma2) * self.resid_var,
                         self.sigma2)
 
-        A, b = cv.constraints()
-        A_target = np.eye(1)
+        a, b = cv.constraints()
+        a_target = np.eye(1)
         b_target = np.array([0.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
 
         state = np.random.get_state()
@@ -409,10 +406,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
                             0, 1, 1, self.T, backcast, var_bounds)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = garch.constraints()
-        A_target = np.vstack((np.eye(3), np.array([[0, -0.5, -1.0]])))
+        a, b = garch.constraints()
+        a_target = np.vstack((np.eye(3), np.array([[0, -0.5, -1.0]])))
         b_target = np.array([0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -465,11 +462,11 @@ class TestVolatiltyProcesses(unittest.TestCase):
                             1, 1, 0, self.T, backcast, var_bounds)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = garch.constraints()
-        A_target = np.vstack((np.eye(3), np.array([[0, -1.0, -0.5]])))
-        A_target[2, 1] = 1.0
+        a, b = garch.constraints()
+        a_target = np.vstack((np.eye(3), np.array([[0, -1.0, -0.5]])))
+        a_target[2, 1] = 1.0
         b_target = np.array([0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -518,11 +515,11 @@ class TestVolatiltyProcesses(unittest.TestCase):
                            self.T, backcast, var_bounds)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = arch.constraints()
-        A_target = np.vstack((np.eye(6),
+        a, b = arch.constraints()
+        a_target = np.vstack((np.eye(6),
                               np.array([[0, -1.0, -1.0, -1.0, -1.0, -1.0]])))
         b_target = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -669,10 +666,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
         assert_allclose(self.sigma2 / cond_var_direct,
                         np.ones_like(self.sigma2))
 
-        A, b = ewma.constraints()
-        A_target = np.empty((0, 0))
+        a, b = ewma.constraints()
+        a_target = np.empty((0, 0))
         b_target = np.empty((0,))
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
         state = np.random.get_state()
         rng = Normal()
@@ -721,16 +718,20 @@ class TestVolatiltyProcesses(unittest.TestCase):
         rm06.compute_variance(parameters, self.resids, self.sigma2,
                               backcast, var_bounds)
 
-        A, b = rm06.constraints()
-        A_target = np.empty((0, 0))
+        a, b = rm06.constraints()
+        a_target = np.empty((0, 0))
         b_target = np.empty((0,))
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
 
         # TODO: Test RM06 Simulation
         state = np.random.get_state()
+        assert isinstance(state, tuple)
         rng = Normal()
         sim_data = rm06.simulate(parameters, self.T, rng.simulate([]))
+        assert len(sim_data) == 2
+        assert len(sim_data[0]) == len(sim_data[1])
+        assert len(sim_data[0]) == self.T
 
         assert_equal(rm06.num_params, 0)
         assert_equal(rm06.name, 'RiskMetrics2006')
@@ -768,10 +769,10 @@ class TestVolatiltyProcesses(unittest.TestCase):
                              abs_std_resids)
         assert_allclose(self.sigma2, cond_var_direct)
 
-        A, b = egarch.constraints()
-        A_target = np.vstack((np.array([[0, 0, 0, -1.0]])))
+        a, b = egarch.constraints()
+        a_target = np.vstack((np.array([[0, 0, 0, -1.0]])))
         b_target = np.array([-1.0])
-        assert_array_equal(A, A_target)
+        assert_array_equal(a, a_target)
         assert_array_equal(b, b_target)
 
         state = np.random.get_state()

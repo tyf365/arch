@@ -632,7 +632,8 @@ class ARCHModel(object):
         else:
             return inv_hess / nobs
 
-    def forecast(self, params, horizon=1, start=None, align='origin'):
+    def forecast(self, params, horizon=1, start=None, align='origin', method='analytic',
+                 simulations=1000):
         """
         Computes forecasts from the model
         """
@@ -944,7 +945,8 @@ class ARCHModelFixedResult(object):
 
         return fig
 
-    def forecast(self, params=None, horizon=1, start=None, align='origin'):
+    def forecast(self, params=None, horizon=1, start=None, align='origin', method='analytic',
+                 simulations=1000):
         """
         Construct forecasts from estimated model
 
@@ -959,21 +961,30 @@ class ARCHModelFixedResult(object):
         start : int, datetime or str, optional
             An integer, datetime or str indicating the first observation to
             produce the forecast for.  Datetimes can only be used with pandas
-            inputs that have a datetime index.  Strings must be convertible
+            inputs that have a datetime index. Strings must be convertible
             to a date time, such as in '1945-01-01'.
         align : str, optional
             Either 'origin' or 'target'.  When set of 'origin', the t-th row
-            of forecasts contains the forecasts for t+1, t+2, ..., t+h.
-            When set to 'target', the t-th row contains the 1-step ahead
-            forecast from time t-1, the 2 step from time t-2, ..., and the
-            h-step from time t-h.  'target' simplified computing forecast
-            errors since the realization and h-step forecast are aligned.
+            of forecasts contains the forecasts for t+1, t+2, ..., t+h. When
+            set to 'target', the t-th row contains the 1-step ahead forecast
+            from time t-1, the 2 step from time t-2, ..., and the h-step from
+            time t-h.  'target' simplified computing forecast errors since the
+            realization and h-step forecast are aligned.
+        method : {'analytic', 'simulation', 'bootstrap'}
+            Method to use when producing the forecast. The default is analytic.
+            The method only affects the variance forecast generation.  Not all
+            volatility models support all methods. In particular, volatility
+            models that do not evolve in squares such as EGARCH or TARCH do not
+            support the 'analytic' method for horizons > 1.
+        simulations : int
+            Number of simulations to run when computing the forecast using
+            either simulation or bootstrap.
 
         Returns
         -------
         forecasts : DataFrame
-            t by h data frame containing the forecasts.  The alignment of the
-            forecasts is controlled by `align`.
+            t by h data frame containing the forecasts.  The alignment of the forecasts is
+            controlled by `align`.
 
         Examples
         --------
@@ -1014,7 +1025,7 @@ class ARCHModelFixedResult(object):
             if (params.size != np.array(self._params).size or
                     params.ndim != self._params.ndim):
                 raise ValueError('params have incorrect dimensions')
-        return self.model.forecast(params, horizon, start, align)
+        return self.model.forecast(params, horizon, start, align, method, simulations)
 
     def hedgehog_plot(self, params=None, horizon=10, step=10, start=None):
         """

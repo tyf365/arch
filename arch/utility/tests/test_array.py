@@ -1,14 +1,13 @@
 from unittest import TestCase
 
-from numpy.testing import assert_equal
 import numpy as np
-from pandas import Series, DataFrame, date_range
 import pytest
-
+from arch.compat.python import add_metaclass
+from arch.univariate.base import implicit_constant
 from arch.utility.array import ensure1d, parse_dataframe, DocStringInheritor, \
     date_to_index, find_index
-from arch.univariate.base import implicit_constant
-from arch.compat.python import add_metaclass
+from numpy.testing import assert_equal
+from pandas import Series, DataFrame, date_range
 
 
 class TestUtils(TestCase):
@@ -123,20 +122,18 @@ class TestUtils(TestCase):
         assert_equal(find_index(series, series.index[0]), 0)
         assert_equal(find_index(series, series.index[3000]), 3000)
         assert_equal(find_index(series, series.index[3000].to_datetime()), 3000)
-        found_loc =find_index(series,
-                              np.datetime64(series.index[3000].to_datetime()))
+        found_loc = find_index(series, np.datetime64(series.index[3000].to_datetime()))
         assert_equal(found_loc, 3000)
         with pytest.raises(ValueError):
             find_index(series, 'bad-date')
         with pytest.raises(ValueError):
             find_index(series, '1900-01-01')
-        
+
         assert_equal(find_index(df, '2000-01-01'), 0)
         assert_equal(find_index(df, df.index[0]), 0)
         assert_equal(find_index(df, df.index[3000]), 3000)
         assert_equal(find_index(df, df.index[3000].to_datetime()), 3000)
-        found_loc =find_index(df,
-                              np.datetime64(df.index[3000].to_datetime()))
+        found_loc = find_index(df, np.datetime64(df.index[3000].to_datetime()))
         assert_equal(found_loc, 3000)
         with pytest.raises(ValueError):
             find_index(df, 'bad-date')

@@ -1,17 +1,16 @@
 from __future__ import division
 
 from unittest import TestCase
-import pytest
 
 import numpy as np
-import pandas as pd
-import scipy.stats as stats
 from numpy import random, linspace
 from numpy.testing import assert_equal, assert_allclose
+import pandas as pd
 from pandas.util.testing import assert_series_equal, assert_frame_equal
+import pytest
+import scipy.stats as stats
 
-from arch.bootstrap import (StationaryBootstrap, CircularBlockBootstrap,
-                            MovingBlockBootstrap)
+from arch.bootstrap import StationaryBootstrap, CircularBlockBootstrap, MovingBlockBootstrap
 from arch.bootstrap.multiple_comparrison import SPA, StepM, MCS
 
 
@@ -52,10 +51,12 @@ class TestSPA(TestCase):
         kernel_weights = np.zeros(t)
         p = 1 / 10.0
         for i in range(1, t):
-            kernel_weights[i] = ((1.0 - (i / t)) * ((1 - p) ** i)) + ((i / t) * ((1 - p) ** (t - i)))
+            kernel_weights[i] = ((1.0 - (i / t)) * ((1 - p) ** i)) + \
+                                ((i / t) * ((1 - p) ** (t - i)))
         direct_vars = (demeaned ** 2).sum(0) / t
         for i in range(1, t):
-            direct_vars += 2 * kernel_weights[i] * (demeaned[:t - i, :] * demeaned[i:, :]).sum(0) / t
+            direct_vars += 2 * kernel_weights[i] * (demeaned[:t - i, :] * demeaned[i:, :]).sum(
+                0) / t
         assert_allclose(direct_vars, variances)
 
         selection_criteria = -1.0 * np.sqrt((direct_vars / t) * 2 * np.log(np.log(t)))
@@ -115,8 +116,8 @@ class TestSPA(TestCase):
 
         expected = ('<strong>SPA</strong>(' +
                     '<strong>studentization</strong>: asymptotic, ' +
-                    '<strong>bootstrap</strong>: ' + str(spa.bootstrap) + ', '
-                                                                          '<strong>ID</strong>: ' + hex(id(spa)) + ')')
+                    '<strong>bootstrap</strong>: ' + str(spa.bootstrap) +
+                    ', <strong>ID</strong>: ' + hex(id(spa)) + ')')
 
         assert_equal(spa._repr_html_(), expected)
         spa = SPA(self.benchmark, self.models, studentize=False, bootstrap='cbb')
@@ -154,12 +155,11 @@ class TestSPA(TestCase):
         assert isinstance(spa.bootstrap, MovingBlockBootstrap)
 
     def test_single_model(self):
-        spa = SPA(self.benchmark, self.models[:,0])
+        spa = SPA(self.benchmark, self.models[:, 0])
         spa.compute()
 
-        spa = SPA(self.benchmark_series, self.models_df.iloc[:,0])
+        spa = SPA(self.benchmark_series, self.models_df.iloc[:, 0])
         spa.compute()
-
 
 
 class TestStepM(TestCase):
@@ -198,6 +198,7 @@ class TestStepM(TestCase):
         stepm = StepM(self.benchmark, adj_models, reps=120)
         stepm.compute()
         superior_models = stepm.superior_models
+        assert len(superior_models) > 0
         spa = SPA(self.benchmark, adj_models, reps=120)
         spa.compute()
         spa.pvalues
@@ -207,10 +208,12 @@ class TestStepM(TestCase):
         stepm = StepM(self.benchmark_series, adj_models, reps=120)
         stepm.compute()
         superior_models = stepm.superior_models
+        assert len(superior_models) > 0
 
     def test_str_repr(self):
         stepm = StepM(self.benchmark_series, self.models, size=0.10)
-        expected = 'StepM(FWER (size): 0.10, studentization: asymptotic, bootstrap: ' + str(stepm.spa.bootstrap) + ')'
+        expected = 'StepM(FWER (size): 0.10, studentization: asymptotic, bootstrap: ' + str(
+            stepm.spa.bootstrap) + ')'
         assert_equal(str(stepm), expected)
         expected = expected[:-1] + ', ID: ' + hex(id(stepm)) + ')'
         assert_equal(stepm.__repr__(), expected)
@@ -224,14 +227,15 @@ class TestStepM(TestCase):
         assert_equal(stepm._repr_html_(), expected)
 
         stepm = StepM(self.benchmark_series, self.models, size=0.05, studentize=False)
-        expected = 'StepM(FWER (size): 0.05, studentization: none, bootstrap: ' + str(stepm.spa.bootstrap) + ')'
+        expected = 'StepM(FWER (size): 0.05, studentization: none, bootstrap: ' + str(
+            stepm.spa.bootstrap) + ')'
         assert_equal(expected, str(stepm))
 
     def test_single_model(self):
-        stepm = StepM(self.benchmark, self.models[:,0], size=0.10)
+        stepm = StepM(self.benchmark, self.models[:, 0], size=0.10)
         stepm.compute()
 
-        stepm = StepM(self.benchmark_series, self.models_df.iloc[:,0])
+        stepm = StepM(self.benchmark_series, self.models_df.iloc[:, 0])
         stepm.compute()
 
     def test_all_superior(self):
@@ -247,7 +251,7 @@ class TestStepM(TestCase):
 
     def test_exact_ties(self):
         adj_models = self.models_df - 100.0
-        adj_models.iloc[:, :2] -= adj_models.iloc[:,:2].mean()
+        adj_models.iloc[:, :2] -= adj_models.iloc[:, :2].mean()
         adj_models.iloc[:, :2] += self.benchmark_df.mean().iloc[0]
         stepm = StepM(self.benchmark_df, adj_models, size=0.10)
         stepm.compute()
@@ -314,7 +318,7 @@ class TestMCS(TestCase):
             pvals[i] = pval if i == 0 else np.max([pvals[i - 1], pval])
             indices[i] = include[drop_index]
         direct = pd.DataFrame(pvals,
-                              index=np.array(indices,dtype=np.int64),
+                              index=np.array(indices, dtype=np.int64),
                               columns=['Pvalue'])
         direct.index.name = 'Model index'
         assert_frame_equal(mcs.pvalues.iloc[:m], direct)
@@ -352,15 +356,15 @@ class TestMCS(TestCase):
             removed = list(indices[np.isfinite(indices)])
             include = list(set(list(range(10))).difference(removed))
             include.sort()
-            pval, drop_index, std_devs = max_step(losses[:, np.array(include)], mcs._bootsrap_indices)
+            pval, drop_index, std_devs = max_step(losses[:, np.array(include)],
+                                                  mcs._bootsrap_indices)
             pvals[i] = pval if i == 0 else np.max([pvals[i - 1], pval])
             indices[i] = include[drop_index]
         direct = pd.DataFrame(pvals,
-                              index=np.array(indices,dtype=np.int64),
+                              index=np.array(indices, dtype=np.int64),
                               columns=['Pvalue'])
         direct.index.name = 'Model index'
         assert_frame_equal(mcs.pvalues.iloc[:m], direct)
-
 
     def test_smoke(self):
         mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max')
@@ -373,14 +377,14 @@ class TestMCS(TestCase):
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            MCS(self.losses[:,1], 0.05)
+            MCS(self.losses[:, 1], 0.05)
         mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max', bootstrap='circular')
         mcs.compute()
-        mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max', bootstrap='moving block')
+        mcs = MCS(self.losses, 0.05, reps=100, block_size=10, method='max',
+                  bootstrap='moving block')
         mcs.compute()
         with pytest.raises(ValueError):
             MCS(self.losses, 0.05, bootstrap='unknown')
-
 
     def test_str_repr(self):
         mcs = MCS(self.losses, 0.05)
@@ -399,7 +403,7 @@ class TestMCS(TestCase):
         mcs = MCS(losses, 0.05, reps=200)
         mcs.seed(23456)
         mcs.compute()
-        nan_locs = np.isnan(mcs.pvalues.iloc[:,0])
+        nan_locs = np.isnan(mcs.pvalues.iloc[:, 0])
         assert not nan_locs.any()
 
     def test_exact_ties(self):

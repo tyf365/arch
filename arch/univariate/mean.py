@@ -580,7 +580,8 @@ class HARX(ARCHModel):
                                self._y_series, names, loglikelihood,
                                self._is_pandas, _xopt, copy.deepcopy(self))
 
-    def forecast(self, params, horizon=1, start=None, align='origin'):
+    def forecast(self, params, horizon=1, start=None, align='origin', method='analytic',
+                 simulations=1000):
         """
         Forecast values
 
@@ -591,16 +592,20 @@ class HARX(ARCHModel):
         horizon : int, optional
             Maximum horizon to construct forecasts
         start : int, str, or datetime-like, optional
-            Integer index, date-convertible string or datetime to use to
-            compute the observation of the first forecast. String and datetime
-            can only be used with a pandas Series or DataFrame.
+            Integer index, date-convertible string or datetime to use to compute the observation
+            of the first forecast. String and datetime can only be used with a pandas Series or
+            DataFrame.
         align : str, optional
-            Alignment of forecasts.  'origin' aligns with last observation used
-            to produce the forecast, so that observation i will have columns
-            h.1, h.2, ..., h.horizon which are the 1-step ahead using
-            information up-to-and-including i.  'target' aligns the
-            observations so that the forecast in position [i, h.k] will for
-            the time i=k forecast of the value in position i.
+            Alignment of forecasts.  'origin' aligns with last observation used to produce the
+            forecast, so that observation i will have columns h.1, h.2, ..., h.horizon which are
+            the 1-step ahead using information up-to-and-including i.  'target' aligns the
+            observations so that the forecast in position [i, h.k] will for the time i=k forecast
+            of the value in position i.
+        method : {'analytic', 'simulation', 'bootstrap'}
+            Method to use when producing the forecast. The default is analytic.
+        simulations : int
+            Number of simulations to run when computing the forecast using either simulation or
+            bootstrap.
 
         Returns
         -------
@@ -1146,7 +1151,7 @@ def arch_model(y, x=None, mean='Constant', lags=0, vol='Garch', p=1, o=0, q=1,
     Notes
     -----
     Input that are not relevant for a particular specification, such as `lags`
-    when `mean=zero`, are silently ignored.
+    when `mean='zero'`, are silently ignored.
     """
     known_mean = ('zero', 'constant', 'harx', 'har', 'ar', 'arx', 'ls')
     known_vol = ('arch', 'garch', 'harch', 'constant', 'egarch')

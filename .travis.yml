@@ -97,7 +97,7 @@ script:
   # Show versions
   - conda list
   # flake testing
-  - flake8 arch --exclude=*test*
+  - flake8 arch
   # Main test
   - mkdir -p travis-test && cd travis-test
   - py.test -s --cov=arch --pyargs arch
