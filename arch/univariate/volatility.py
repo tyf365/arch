@@ -214,8 +214,8 @@ class VolatilityProcess(object):
         """
         raise NotImplementedError('Must be overridden')  # pragma: no cover
 
-    def forecast(self, parameters, data, first_obs=0, horizon=1,
-                 method='analytic', simulations=1000):
+    def forecast(self, parameters, resids, first_obs=0, horizon=1,
+                 method='analytic', simulations=1000, rng=None):
         """
         Forecast volatility from the model
 
@@ -236,6 +236,10 @@ class VolatilityProcess(object):
         simulations : int
             Number of simulations to run when computing the forecast using
             either simulation or bootstrap.
+        rng : callable
+            Callable random number generator required if method is
+            'simulation'. Must take a single shape input and return random
+            samples numbers with that shape.
 
         Returns
         -------
@@ -371,7 +375,7 @@ class ConstantVariance(VolatilityProcess):
 
 
 class GARCH(VolatilityProcess):
-    """
+    r"""
     GARCH and related model estimation
 
     The following models can be specified using GARCH:
@@ -424,11 +428,11 @@ class GARCH(VolatilityProcess):
 
     .. math::
 
-        \\sigma_{t}^{\\lambda}=\\omega
-        +\\sum_{i=1}^{p}\\alpha_{i}\\left|\\epsilon_{t-i}\\right|^{\\lambda}
-        +\\sum_{j=1}^{o}\\gamma_{j}\\left|\\epsilon_{t-j}\\right|^{\\lambda}
-        I\\left[\\epsilon_{t-j}<0\\right]
-        +\\sum_{k=1}^{q}\\beta_{k}\\sigma_{t-k}^{\\lambda}
+        \sigma_{t}^{\lambda}=\omega
+        +\sum_{i=1}^{p}\alpha_{i}\left|\epsilon_{t-i}\right|^{\lambda}
+        +\sum_{j=1}^{o}\gamma_{j}\left|\epsilon_{t-j}\right|^{\lambda}
+        I\left[\epsilon_{t-j}<0\right]
+        +\sum_{k=1}^{q}\beta_{k}\sigma_{t-k}^{\lambda}
     """
 
     def __init__(self, p=1, o=0, q=1, power=2.0):
@@ -647,7 +651,7 @@ class GARCH(VolatilityProcess):
 
 
 class HARCH(VolatilityProcess):
-    """
+    r"""
     Heterogeneous ARCH process
 
     Parameters
@@ -678,19 +682,19 @@ class HARCH(VolatilityProcess):
 
     .. math::
 
-        \\sigma^{2}=\\omega
-        +\\sum_{i=1}^{m}\\alpha_{l_{i}}
-        \\left(l_{i}^{-1}\\sum_{j=1}^{l_{i}}\\epsilon_{t-j}^{2}\\right)
+        \sigma^{2}=\omega
+        +\sum_{i=1}^{m}\alpha_{l_{i}}
+        \left(l_{i}^{-1}\sum_{j=1}^{l_{i}}\epsilon_{t-j}^{2}\right)
 
     In the common case where lags=[1,5,22], the model is
 
     .. math::
 
-        \\sigma_{t}^{2}=\\omega+\\alpha_{1}\\epsilon_{t-1}^{2}
-        +\\alpha_{5}
-        \\left(\\frac{1}{5}\\sum_{j=1}^{5}\\epsilon_{t-j}^{2}\\right)
-        +\\alpha_{22}
-        \\left(\\frac{1}{22}\\sum_{j=1}^{22}\\epsilon_{t-j}^{2}\\right)
+        \sigma_{t}^{2}=\omega+\alpha_{1}\epsilon_{t-1}^{2}
+        +\alpha_{5}
+        \left(\frac{1}{5}\sum_{j=1}^{5}\epsilon_{t-j}^{2}\right)
+        +\alpha_{22}
+        \left(\frac{1}{22}\sum_{j=1}^{22}\epsilon_{t-j}^{2}\right)
 
     A HARCH process is a special case of an ARCH process where parameters in
     the more general ARCH process have been restricted.
@@ -789,7 +793,7 @@ class HARCH(VolatilityProcess):
 
 
 class ARCH(GARCH):
-    """
+    r"""
     ARCH process
 
     Parameters
@@ -818,7 +822,7 @@ class ARCH(GARCH):
 
     .. math::
 
-        \\sigma_t^{2}=\\omega+\\sum_{i=1}^{p}\\alpha_{i}\\epsilon_{t-i}^{2}
+        \sigma_t^{2}=\omega+\sum_{i=1}^{p}\alpha_{i}\epsilon_{t-i}^{2}
 
     """
 
@@ -845,7 +849,7 @@ class ARCH(GARCH):
 
 
 class EWMAVariance(VolatilityProcess):
-    """
+    r"""
     Exponentially Weighted Moving-Average (RiskMetrics) Variance process
 
     Parameters
@@ -871,7 +875,7 @@ class EWMAVariance(VolatilityProcess):
 
     .. math::
 
-        \\sigma_t^{2}=\\lambda\\sigma_{t-1}^2 + (1-\\lambda)\\epsilon^2_{t-1}
+        \sigma_t^{2}=\lambda\sigma_{t-1}^2 + (1-\lambda)\epsilon^2_{t-1}
 
     This model has no parameters since the smoothing parameter is fixed.
     """
@@ -1089,7 +1093,7 @@ class RiskMetrics2006(VolatilityProcess):
 
 
 class EGARCH(VolatilityProcess):
-    """
+    r"""
     EGARCH model estimation
 
     Parameters
@@ -1128,13 +1132,13 @@ class EGARCH(VolatilityProcess):
 
     .. math::
 
-        \\ln\\sigma_{t}^{2}=\\omega
-        +\\sum_{i=1}^{p}\\alpha_{i}
-        \\left(\\left|e_{t-i}\\right|-\\sqrt{2/\\pi}\\right)
-        +\\sum_{j=1}^{o}\\gamma_{j}\\left|e_{t-j}\\right|
-        +\\sum_{k=1}^{q}\\beta_{k}\\ln\\sigma_{t-k}^{2}
+        \ln\sigma_{t}^{2}=\omega
+        +\sum_{i=1}^{p}\alpha_{i}
+        \left(\left|e_{t-i}\right|-\sqrt{2/\pi}\right)
+        +\sum_{j=1}^{o}\gamma_{j}\left|e_{t-j}\right|
+        +\sum_{k=1}^{q}\beta_{k}\ln\sigma_{t-k}^{2}
 
-    where :math:`e_{t}=\\epsilon_{t}/\\sigma_{t}`.
+    where :math:`e_{t}=\epsilon_{t}/\sigma_{t}`.
     """
 
     def __init__(self, p=1, o=0, q=1):

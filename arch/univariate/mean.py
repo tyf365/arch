@@ -41,7 +41,7 @@ def align_forecast(f, align):
 
 
 class HARX(ARCHModel):
-    """
+    r"""
     Heterogeneous Autoregression (HAR), with optional exogenous regressors,
     model estimation and simulation
 
@@ -101,10 +101,10 @@ class HARX(ARCHModel):
 
     .. math::
 
-        y_t = \mu + \sum_{i=1}^p \phi_{L_{i}} \\bar{y}_{t-L_{i,0}:L_{i,1}}
+        y_t = \mu + \sum_{i=1}^p \phi_{L_{i}} \bar{y}_{t-L_{i,0}:L_{i,1}}
         + \gamma' x_t + \epsilon_t
 
-    where :math:`\\bar{y}_{t-L_{i,0}:L_{i,1}}` is the average value of
+    where :math:`\bar{y}_{t-L_{i,0}:L_{i,1}}` is the average value of
     :math:`y_t` between :math:`t-L_{i,0}` and :math:`t - L_{i,1}`.
     """
 
