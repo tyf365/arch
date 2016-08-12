@@ -192,6 +192,7 @@ class ARCHModel(object):
         self._volatility = None
         self._distribution = None
         self._backcast = None
+        self._var_bounds = None
 
         if volatility is not None:
             self.volatility = volatility
@@ -433,7 +434,7 @@ class ARCHModel(object):
         backcast = v.backcast(resids)
         self._backcast = backcast
         sv_volatility = v.starting_values(resids)
-        var_bounds = v.variance_bounds(resids)
+        self._var_bounds = var_bounds = v.variance_bounds(resids)
         v.compute_variance(sv_volatility, resids, sigma2, backcast, var_bounds)
         std_resids = resids / sqrt(sigma2)
 

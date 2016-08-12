@@ -13,6 +13,7 @@ except:
 from arch.univariate.volatility import GARCH, ARCH, HARCH, ConstantVariance, \
     EWMAVariance, RiskMetrics2006, EGARCH
 from arch.univariate.distribution import Normal, StudentsT, SkewStudent
+from arch.univariate import ZeroMean
 from arch.compat.python import range
 
 
@@ -821,6 +822,171 @@ class TestVolatiltyProcesses(unittest.TestCase):
         with pytest.raises(ValueError):
             EGARCH(p=1, o=1, q=-1)
 
+    def test_constant_variance_forecast_smoke(self):
+        np.random.seed(12345)
+        mod = ZeroMean()
+        mod.volatility = ConstantVariance()
+        mod.distribution = Normal()
+        data = mod.simulate([1.0], 1000)
 
-if __name__ == '__main__':
-    unittest.main()
+        mod = ZeroMean(data['data'])
+        mod.volatility = ConstantVariance()
+        res = mod.fit()
+        forecast = res.model.volatility.forecast
+        params = res.params.values
+        resids = data['data'].values
+        backcast = res.model._backcast
+        var_bounds = res.model._var_bounds
+        fcast = forecast(params, resids, backcast, var_bounds)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=1,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 1
+        fcast = forecast(params, resids, backcast, var_bounds,  method='simulation', horizon=5,
+                         rng=mod.distribution.simulate(params), start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 5
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=10,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 10
+
+    def test_garch_forecast_smoke(self):
+        np.random.seed(12345)
+        mod = ZeroMean()
+        mod.volatility = GARCH()
+        mod.distribution = Normal()
+        data = mod.simulate([1.0, 0.05, 0.9], 1000)
+
+        mod = ZeroMean(data['data'])
+        mod.volatility = GARCH()
+        res = mod.fit()
+        forecast = res.model.volatility.forecast
+        params = res.params.values
+        resids = data['data'].values
+        backcast = res.model._backcast
+        var_bounds = res.model._var_bounds
+        fcast = forecast(params, resids, backcast, var_bounds)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=1,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 1
+        fcast = forecast(params, resids, backcast, var_bounds, method='simulation', horizon=5,
+                         rng=mod.distribution.simulate(params), start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 5
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=10,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 10
+
+    def test_arch_forecast_smoke(self):
+        np.random.seed(12345)
+        mod = ZeroMean()
+        mod.volatility = GARCH(p=5, q=0)
+        mod.distribution = Normal()
+        data = mod.simulate([1.0, 0.15, 0.15, 0.15, 0.15, 0.15], 1000)
+
+        mod = ZeroMean(data['data'])
+        mod.volatility = GARCH(p=5, q=0)
+        res = mod.fit()
+
+        forecast = res.model.volatility.forecast
+        params = res.params.values
+        resids = data['data'].values
+        backcast = res.model._backcast
+        var_bounds = res.model._var_bounds
+        fcast = forecast(params, resids, backcast, var_bounds)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        fcast = forecast(params, resids, backcast, var_bounds, horizon=7)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 7
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=1,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 1
+        fcast = forecast(params, resids, backcast, var_bounds, method='simulation', horizon=5,
+                         rng=mod.distribution.simulate(params), start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 5
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=10,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 10
+
+    def test_gjrarch_forecast_smoke(self):
+        np.random.seed(12345)
+        mod = ZeroMean()
+        mod.volatility = GARCH(p=1, o=1, q=1)
+        mod.distribution = Normal()
+        data = mod.simulate([1.0, 0.05, 0.1, 0.85], 1000)
+
+        mod = ZeroMean(data['data'])
+        mod.volatility = GARCH(p=1, o=1, q=1)
+        res = mod.fit()
+
+        forecast = res.model.volatility.forecast
+        params = res.params.values
+        resids = data['data'].values
+        backcast = res.model._backcast
+        var_bounds = res.model._var_bounds
+        fcast = forecast(params, resids, backcast, var_bounds)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        fcast = forecast(params, resids, backcast, var_bounds, horizon=7)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 7
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='simulation', horizon=5,
+                         rng=mod.distribution.simulate(params), start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 5
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=1,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 1
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=10,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 10
+
+    def test_tarch_forecast_smoke(self):
+        np.random.seed(12345)
+        mod = ZeroMean()
+        mod.volatility = GARCH(p=1, o=1, q=1, power=1.0)
+        mod.distribution = Normal()
+        data = mod.simulate([1.0, 0.05, 0.1, 0.85], 1000)
+
+        mod = ZeroMean(data['data'])
+        mod.volatility = GARCH(p=1, o=1, q=1, power=1.0)
+        res = mod.fit()
+
+        forecast = res.model.volatility.forecast
+        params = res.params.values
+        resids = data['data'].values
+        backcast = res.model._backcast
+        var_bounds = res.model._var_bounds
+        fcast = forecast(params, resids, backcast, var_bounds)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='simulation', horizon=5,
+                         rng=mod.distribution.simulate(params), start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 5
+
+        fcast = forecast(params, resids, backcast, var_bounds, method='bootstrap', horizon=10,
+                         start=100)
+        assert fcast.forecasts.shape[0] == resids.shape[0]
+        assert fcast.forecasts.shape[1] == 10
+
+        with pytest.raises(ValueError):
+            forecast(params, resids, backcast, var_bounds, horizon=2)
