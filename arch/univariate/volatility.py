@@ -733,40 +733,38 @@ class GARCH(VolatilityProcess):
     def _analytic_forecast(self, parameters, resids, backcast, var_bounds, start, horizon):
         t, sigma2, forecasts = self.__one_step_forecast(parameters, resids, backcast,
                                                         var_bounds, start, horizon)
+
         if horizon > 1:
             p, o, q = self.p, self.o, self.q
             omega = parameters[0]
             alpha = parameters[1:p + 1]
             gamma = parameters[p + 1: p + o + 1]
             beta = parameters[p + o + 1:]
+
+            m = np.max([p, o, q])
+            _resids = np.zeros(m + horizon)
+            _sigma2 = np.zeros(m + horizon)
+
             for i in range(start, t):
-                for h in range(1, horizon):
+                _resids[:m] = resids[i - m:i] ** 2.0
+                _asym_resids = _resids * (_resids < 0)
+                _sigma2[:m] = sigma2[i - m:i]
+                for h in range(horizon):
                     forecasts[i, h] = omega
+                    start_loc = h + m - 1
+
                     for j in range(p):
-                        if i - j < 0:
-                            shock = backcast
-                        elif h - j - 1 >= 0:
-                            shock = forecasts[i, h - j - 1]
-                        else:
-                            shock = resids[i + h - j - 1] ** 2.0
-                        forecasts[i, h] += alpha[j] * shock
+                        forecasts[i, h] += alpha[j] * _resids[start_loc - j] ** 2
+
                     for j in range(o):
-                        if i - j < 0:
-                            shock = 0.5 * backcast
-                        elif h - j - 1 >= 0:
-                            shock = 0.5 * forecasts[i, h - j - 1]
-                        else:
-                            resid = resids[i + h - j - 1]
-                            shock = resid ** 2.0 * (resid < 0)
-                        forecasts[i, h] += gamma[j] * shock
+                        forecasts[i, h] += gamma[j] * _asym_resids[start_loc - j] ** 2
+
                     for j in range(q):
-                        if i - j < 0:
-                            shock = backcast
-                        elif h - j - 1 >= 0:
-                            shock = forecasts[i, h - j - 1]
-                        else:
-                            shock = sigma2[i + h - j - 1]
-                        forecasts[i, h] += beta[j] * shock
+                        forecasts[i, h] += beta[j] * _sigma2[start_loc - j]
+
+                    _resids[h + m] = np.sqrt(forecasts[i, h])
+                    _asym_resids[h + m] = np.sqrt(0.5 * forecasts[i, h])
+                    _sigma2[h + m] = forecasts[i, h]
 
         return VarianceForecast(forecasts)
 
