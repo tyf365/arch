@@ -149,13 +149,7 @@ for key in PACKAGE_CHECKS:
         except ImportError:
             pass
 
-    elif key == 'pandas':
-        try:
-            from pandas.version import short_version as version
-        except ImportError:
-            pass
-        except:  # very old version
-            satisfies_req = False
+   
     else:
         raise NotImplementedError('Unknown package')
 
